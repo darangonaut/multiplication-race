@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Násobilka - Závodní hra</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #gameContainer {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            background: #228B22;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        #score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 15px 0 5px 0;
+        }
+        
+        #speed {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        #question {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+        
+        #gameOver h2 {
+            color: #e74c3c;
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+        
+        #gameOver p {
+            font-size: 22px;
+            margin: 15px 0;
+            color: #2c3e50;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .controls {
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1 style="margin-bottom: 10px; color: #333;">🏎️ Násobilka - Závod</h1>
+        <div id="question">3 × 4 = ?</div>
+        <div id="score">Správné odpovědi: 0</div>
+        <div id="speed">Rychlost: 1.5×</div>
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <div class="controls">Ovládání: ← → nebo A D | Projet správnou odpovědí!</div>
+        <div id="gameOver">
+            <h2>Konec hry!</h2>
+            <p>Tvoje skóre:<br><strong style="font-size: 32px; color: #667eea;"><span id="finalScore">0</span></strong></p>
+            <button onclick="restartGame()">Hrát znovu</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameRunning = true;
+        let score = 0;
+        let speed = 1.5;
+        let roadOffset = 0;
+        
+        // Auto
+        const car = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 100,
+            width: 30,
+            height: 50,
+            speed: 5
+        };
+        
+        // Násobilka
+        let currentQuestion = {};
+        let answers = [];
+        
+        // Cesta
+        let roadPoints = [];
+        const roadWidth = 280;
+        const segmentHeight = 30;
+        
+        // Konfety
+        let confetti = [];
+        
+        // Generování příkladu násobilky
+        function generateQuestion() {
+            const a = Math.floor(Math.random() * 10) + 1;
+            const b = Math.floor(Math.random() * 10) + 1;
+            const correctAnswer = a * b;
+            
+            // Špatná odpověď (náhodně ±1 až ±5, ale ne správná)
+            let wrongAnswer;
+            do {
+                const offset = Math.floor(Math.random() * 5) + 1;
+                wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
+            } while (wrongAnswer === correctAnswer || wrongAnswer < 1);
+            
+            currentQuestion = {
+                a: a,
+                b: b,
+                correct: correctAnswer
+            };
+            
+            // Umístění odpovědí na cestu - vždy relativně k aktuálnímu roadOffset
+            const answerY = -roadOffset - 150; // Začnou nahoře mimo obrazovku
+            const roadCenter = getRoadCenterAt(answerY);
+            
+            // Odpovědi s větší mezerou - 75px od středu
+            const leftX = roadCenter - 75;
+            const rightX = roadCenter + 75;
+            
+            // Náhodně rozhodne, která strana bude správná
+            const correctOnLeft = Math.random() > 0.5;
+            
+            answers = [
+                {
+                    value: correctOnLeft ? correctAnswer : wrongAnswer,
+                    correct: correctOnLeft,
+                    x: leftX - 30,
+                    y: answerY,
+                    width: 60,
+                    height: 50,
+                    collected: false
+                },
+                {
+                    value: correctOnLeft ? wrongAnswer : correctAnswer,
+                    correct: !correctOnLeft,
+                    x: rightX - 30,
+                    y: answerY,
+                    width: 60,
+                    height: 50,
+                    collected: false
+                }
+            ];
+            
+            document.getElementById('question').textContent = `${a} × ${b} = ?`;
+        }
+        
+        // Inicializace cesty
+        function initRoad() {
+            roadPoints = [];
+            let centerX = canvas.width / 2;
+            
+            for (let i = -10; i < 30; i++) {
+                const y = i * segmentHeight;
+                centerX += (Math.random() - 0.5) * 20;
+                centerX = Math.max(roadWidth / 2 + 40, Math.min(canvas.width - roadWidth / 2 - 40, centerX));
+                roadPoints.push({ x: centerX, y: y });
+            }
+        }
+        
+        function getRoadCenterAt(y) {
+            for (let i = 0; i < roadPoints.length - 1; i++) {
+                if (y >= roadPoints[i].y && y < roadPoints[i + 1].y) {
+                    const localY = y - roadPoints[i].y;
+                    const t = localY / segmentHeight;
+                    return roadPoints[i].x + (roadPoints[i + 1].x - roadPoints[i].x) * t;
+                }
+            }
+            
+            if (y < roadPoints[0].y) return roadPoints[0].x;
+            return roadPoints[roadPoints.length - 1].x;
+        }
+        
+        // Vykreslení cesty
+        function drawRoad() {
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const visiblePoints = [];
+            for (let i = 0; i < roadPoints.length; i++) {
+                const y = roadPoints[i].y + roadOffset;
+                if (y >= -segmentHeight && y <= canvas.height + segmentHeight) {
+                    visiblePoints.push({ x: roadPoints[i].x, y: y });
+                }
+            }
+            
+            if (visiblePoints.length < 2) return;
+            
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            
+            for (let i = 0; i < visiblePoints.length; i++) {
+                const x = visiblePoints[i].x - roadWidth / 2;
+                const y = visiblePoints[i].y;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            for (let i = visiblePoints.length - 1; i >= 0; i--) {
+                const x = visiblePoints[i].x + roadWidth / 2;
+                const y = visiblePoints[i].y;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            
+            for (let i = 0; i < visiblePoints.length; i++) {
+                const x = visiblePoints[i].x;
+                const y = visiblePoints[i].y;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // Vykreslení odpovědí
+        function drawAnswers() {
+            answers.forEach(answer => {
+                if (answer.collected) return;
+                
+                const y = answer.y + roadOffset;
+                if (y < -100 || y > canvas.height + 100) return;
+                
+                // Stín
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(answer.x + 3, y + 3, answer.width, answer.height);
+                
+                // Box - neutrální modrá barva
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(answer.x, y, answer.width, answer.height);
+                
+                // Okraj
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(answer.x, y, answer.width, answer.height);
+                
+                // Číslo
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 28px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(answer.value, answer.x + answer.width / 2, y + answer.height / 2);
+            });
+        }
+        
+        // Vytvoření konfet
+        function createConfetti(x, y) {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+            for (let i = 0; i < 30; i++) {
+                confetti.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 8 + 4,
+                    life: 1
+                });
+            }
+        }
+        
+        // Vykreslení a aktualizace konfet
+        function drawConfetti() {
+            confetti = confetti.filter(c => {
+                c.x += c.vx;
+                c.y += c.vy;
+                c.vy += 0.3; // gravitace
+                c.life -= 0.02;
+                
+                if (c.life <= 0) return false;
+                
+                ctx.globalAlpha = c.life;
+                ctx.fillStyle = c.color;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                return true;
+            });
+        }
+        
+        // Vykreslení auta
+        function drawCar() {
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+            
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(car.x + 3, car.y + 5, car.width - 6, 15);
+            ctx.fillRect(car.x + 3, car.y + 25, car.width - 6, 15);
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(car.x - 3, car.y + 5, 4, 10);
+            ctx.fillRect(car.x + car.width - 1, car.y + 5, 4, 10);
+            ctx.fillRect(car.x - 3, car.y + 35, 4, 10);
+            ctx.fillRect(car.x + car.width - 1, car.y + 35, 4, 10);
+        }
+        
+        // Kontrola kolize s odpovědí
+        function checkAnswerCollision() {
+            answers.forEach(answer => {
+                if (answer.collected) return;
+                
+                const answerScreenY = answer.y + roadOffset;
+                
+                // Kontrola překrytí
+                if (car.x < answer.x + answer.width &&
+                    car.x + car.width > answer.x &&
+                    car.y < answerScreenY + answer.height &&
+                    car.y + car.height > answerScreenY) {
+                    
+                    answer.collected = true;
+                    
+                    if (answer.correct) {
+                        // Správná odpověď - konfety!
+                        createConfetti(answer.x + answer.width / 2, answerScreenY + answer.height / 2);
+                        score++;
+                        document.getElementById('score').textContent = 'Správné odpovědi: ' + score;
+                        
+                        // Po každé 5. správné odpovědi zrychlit
+                        if (score % 5 === 0) {
+                            speed += 0.3;
+                            document.getElementById('speed').textContent = 'Rychlost: ' + speed.toFixed(1) + '×';
+                        }
+                        
+                        // Generuj nový příklad
+                        setTimeout(() => {
+                            generateQuestion();
+                        }, 500);
+                    } else {
+                        // Špatná odpověď - konec hry
+                        gameOver();
+                    }
+                }
+            });
+        }
+        
+        // Kontrola, zda hráč minul odpovědi
+        function checkMissedAnswers() {
+            // Pokud nějaká odpověď už projela výrazně za auto a žádná nebyla sebrana
+            const anyPassed = answers.some(answer => {
+                const answerScreenY = answer.y + roadOffset;
+                return answerScreenY > car.y + car.height + 20;
+            });
+            
+            const noneCollected = answers.every(answer => !answer.collected);
+            
+            if (anyPassed && noneCollected) {
+                gameOver();
+            }
+        }
+        
+        // Kontrola kolize s okrajem cesty
+        function checkRoadCollision() {
+            const carCenterX = car.x + car.width / 2;
+            const carFrontY = car.y;
+            const carBackY = car.y + car.height;
+            
+            const roadCenterFront = getRoadCenterAt(carFrontY - roadOffset);
+            const roadCenterBack = getRoadCenterAt(carBackY - roadOffset);
+            
+            const leftEdgeFront = roadCenterFront - roadWidth / 2;
+            const rightEdgeFront = roadCenterFront + roadWidth / 2;
+            const leftEdgeBack = roadCenterBack - roadWidth / 2;
+            const rightEdgeBack = roadCenterBack + roadWidth / 2;
+            
+            if (car.x < leftEdgeFront || car.x + car.width > rightEdgeFront ||
+                car.x < leftEdgeBack || car.x + car.width > rightEdgeBack) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // Aktualizace pozice odpovědí podle cesty
+        function updateAnswerPositions() {
+            answers.forEach(answer => {
+                const roadCenter = getRoadCenterAt(answer.y - roadOffset);
+                const isLeft = answer === answers[0];
+                // Odpovědi s větší mezerou - 105px a 45px od středu
+                answer.x = roadCenter + (isLeft ? -105 : 45);
+            });
+        }
+        
+        function updateRoad() {
+            while (roadPoints[0].y + roadOffset > -200) {
+                const firstPoint = roadPoints[0];
+                let newX = firstPoint.x + (Math.random() - 0.5) * 20;
+                newX = Math.max(roadWidth / 2 + 40, Math.min(canvas.width - roadWidth / 2 - 40, newX));
+                roadPoints.unshift({ 
+                    x: newX, 
+                    y: firstPoint.y - segmentHeight 
+                });
+            }
+            
+            while (roadPoints.length > 0 && roadPoints[roadPoints.length - 1].y + roadOffset > canvas.height + 200) {
+                roadPoints.pop();
+            }
+        }
+        
+        const keys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            roadOffset += speed;
+            
+            updateRoad();
+            updateAnswerPositions();
+            
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                car.x -= car.speed;
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                car.x += car.speed;
+            }
+            
+            car.x = Math.max(0, Math.min(canvas.width - car.width, car.x));
+            
+            drawRoad();
+            drawAnswers();
+            drawCar();
+            drawConfetti();
+            
+            checkAnswerCollision();
+            checkMissedAnswers();
+            
+            if (checkRoadCollision()) {
+                gameOver();
+                return;
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        function restartGame() {
+            gameRunning = true;
+            score = 0;
+            speed = 1.5;
+            roadOffset = 0;
+            car.x = canvas.width / 2 - 15;
+            confetti = [];
+            document.getElementById('score').textContent = 'Správné odpovědi: 0';
+            document.getElementById('speed').textContent = 'Rychlost: 1.5×';
+            document.getElementById('gameOver').style.display = 'none';
+            initRoad();
+            generateQuestion();
+            gameLoop();
+        }
+        
+        initRoad();
+        generateQuestion();
+        gameLoop();
+    </script>
+</body>
+</html>
