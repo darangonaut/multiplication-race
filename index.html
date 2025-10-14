@@ -29,6 +29,10 @@
             position: relative;
         }
         
+        h1 {
+            padding-right: 100px;
+        }
+        
         #gameCanvas {
             border: 3px solid #333;
             border-radius: 10px;
@@ -114,26 +118,127 @@
             color: #666;
             font-size: 14px;
         }
+        
+        .language-selector {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        
+        .lang-btn {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        
+        .lang-btn:hover {
+            transform: scale(1.1);
+            border-color: #667eea;
+        }
+        
+        .lang-btn.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <h1 style="margin-bottom: 10px; color: #333;">🏎️ Násobilka - Závod</h1>
+        <div class="language-selector">
+            <button class="lang-btn active" onclick="setLanguage('cs')" title="Česky">🇨🇿</button>
+            <button class="lang-btn" onclick="setLanguage('en')" title="English">🇬🇧</button>
+        </div>
+        <h1 id="gameTitle" style="margin-bottom: 10px; color: #333;">🏎️ Násobilka - Závod</h1>
         <div id="question">3 × 4 = ?</div>
         <div id="score">Správné odpovědi: 0</div>
         <div id="speed">Rychlost: 1.5×</div>
         <canvas id="gameCanvas" width="400" height="600"></canvas>
-        <div class="controls">Ovládání: ← → nebo A D | Projet správnou odpovědí!</div>
+        <div id="controls" class="controls">Ovládání: ← → nebo A D | Projet správnou odpovědí!</div>
         <div id="gameOver">
-            <h2>Konec hry!</h2>
-            <p>Tvoje skóre:<br><strong style="font-size: 32px; color: #667eea;"><span id="finalScore">0</span></strong></p>
-            <button onclick="restartGame()">Hrát znovu</button>
+            <h2 id="gameOverTitle">Konec hry!</h2>
+            <p id="scoreLabel">Tvoje skóre:<br><strong style="font-size: 32px; color: #667eea;"><span id="finalScore">0</span></strong></p>
+            <button id="restartBtn" onclick="restartGame()">Hrát znovu</button>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // Jazykový systém
+        let currentLanguage = 'cs';
+        
+        const translations = {
+            cs: {
+                title: '🏎️ Násobilka - Závod',
+                correctAnswers: 'Správné odpovědi',
+                speed: 'Rychlost',
+                controls: 'Ovládání: ← → nebo A D | Projet správnou odpovědí!',
+                gameOver: 'Konec hry!',
+                yourScore: 'Tvoje skóre:',
+                playAgain: 'Hrát znovu'
+            },
+            en: {
+                title: '🏎️ Multiplication Race',
+                correctAnswers: 'Correct Answers',
+                speed: 'Speed',
+                controls: 'Controls: ← → or A D | Drive through the correct answer!',
+                gameOver: 'Game Over!',
+                yourScore: 'Your score:',
+                playAgain: 'Play Again'
+            }
+        };
+        
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Aktualizuj UI texty
+            document.getElementById('gameTitle').textContent = translations[lang].title;
+            document.getElementById('score').textContent = translations[lang].correctAnswers + ': ' + score;
+            document.getElementById('speed').textContent = translations[lang].speed + ': ' + speed.toFixed(1) + '×';
+            document.getElementById('controls').textContent = translations[lang].controls;
+            document.getElementById('gameOverTitle').textContent = translations[lang].gameOver;
+            document.getElementById('scoreLabel').innerHTML = translations[lang].yourScore + '<br><strong style="font-size: 32px; color: #667eea;"><span id="finalScore">' + score + '</span></strong>';
+            document.getElementById('restartBtn').textContent = translations[lang].playAgain;
+            
+            // Aktualizuj aktivní tlačítko
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((lang === 'cs' && btn.textContent.includes('🇨🇿')) || 
+                    (lang === 'en' && btn.textContent.includes('🇬🇧'))) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Ulož preference
+            localStorage.setItem('gameLanguage', lang);
+        }
+        
+        // Načti uloženou preferenci jazyka
+        const savedLanguage = localStorage.getItem('gameLanguage');
+        if (savedLanguage) {
+            currentLanguage = savedLanguage;
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((savedLanguage === 'cs' && btn.textContent.includes('🇨🇿')) || 
+                    (savedLanguage === 'en' && btn.textContent.includes('🇬🇧'))) {
+                    btn.classList.add('active');
+                }
+            });
+            // Aplikuj překlady při načtení
+            setTimeout(() => {
+                document.getElementById('gameTitle').textContent = translations[currentLanguage].title;
+                document.getElementById('controls').textContent = translations[currentLanguage].controls;
+            }, 0);
+        }
         
         let gameRunning = true;
         let score = 0;
@@ -400,12 +505,12 @@
                         // Správná odpověď - konfety!
                         createConfetti(answer.x + answer.width / 2, answerScreenY + answer.height / 2);
                         score++;
-                        document.getElementById('score').textContent = 'Správné odpovědi: ' + score;
+                        document.getElementById('score').textContent = translations[currentLanguage].correctAnswers + ': ' + score;
                         
                         // Po každé 5. správné odpovědi zrychlit
                         if (score % 5 === 0) {
                             speed += 0.3;
-                            document.getElementById('speed').textContent = 'Rychlost: ' + speed.toFixed(1) + '×';
+                            document.getElementById('speed').textContent = translations[currentLanguage].speed + ': ' + speed.toFixed(1) + '×';
                         }
                         
                         // Generuj nový příklad
@@ -539,8 +644,8 @@
             roadOffset = 0;
             car.x = canvas.width / 2 - 15;
             confetti = [];
-            document.getElementById('score').textContent = 'Správné odpovědi: 0';
-            document.getElementById('speed').textContent = 'Rychlost: 1.5×';
+            document.getElementById('score').textContent = translations[currentLanguage].correctAnswers + ': 0';
+            document.getElementById('speed').textContent = translations[currentLanguage].speed + ': 1.5×';
             document.getElementById('gameOver').style.display = 'none';
             initRoad();
             generateQuestion();
