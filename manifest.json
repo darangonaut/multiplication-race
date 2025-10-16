@@ -2,7 +2,7 @@
     "name": "Násobilka - Závodní hra",
     "short_name": "Násobilka",
     "description": "Závodní hra pro procvičování násobilky",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#667eea",
     "theme_color": "#667eea",
