@@ -1,155 +1,198 @@
 <!DOCTYPE html>
 <html lang="cs">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Násobilka">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <title>Násobilka - Závodní hra</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
-        
+
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
         }
-        
+
         #gameContainer {
             text-align: center;
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             position: relative;
+            max-width: 100vw;
         }
-        
+
         h1 {
-            padding-right: 100px;
+            padding-right: 80px;
+            font-size: clamp(18px, 5vw, 24px);
         }
-        
+
         #gameCanvas {
             border: 3px solid #333;
             border-radius: 10px;
             background: #228B22;
             display: block;
             margin: 0 auto;
+            max-width: 100%;
+            touch-action: none;
         }
-        
+
         #score {
-            font-size: 24px;
+            font-size: clamp(18px, 4vw, 24px);
             font-weight: bold;
             color: #333;
-            margin: 15px 0 5px 0;
+            margin: 10px 0 5px 0;
         }
-        
+
         #speed {
-            font-size: 18px;
+            font-size: clamp(14px, 3.5vw, 18px);
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
-        
+
         #question {
-            font-size: 32px;
+            font-size: clamp(24px, 6vw, 32px);
             font-weight: bold;
             color: #2c3e50;
             margin: 10px 0;
-            padding: 15px;
+            padding: 12px;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             border-radius: 15px;
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
-        
+
         #gameOver {
             display: none;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px 60px;
+            background: rgba(255, 255, 255, 0.97);
+            padding: 30px 40px;
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             z-index: 100;
+            min-width: 280px;
         }
-        
+
         #gameOver h2 {
             color: #e74c3c;
-            font-size: 36px;
+            font-size: clamp(28px, 7vw, 36px);
             margin-bottom: 15px;
         }
-        
+
         #gameOver p {
-            font-size: 22px;
+            font-size: clamp(18px, 4.5vw, 22px);
             margin: 15px 0;
             color: #2c3e50;
         }
-        
+
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 18px;
+            padding: 12px 30px;
+            font-size: clamp(16px, 4vw, 18px);
             border-radius: 50px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             margin-top: 10px;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            min-height: 44px;
         }
-        
-        button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-        
+
         button:active {
             transform: scale(0.95);
         }
-        
+
         .controls {
-            margin-top: 15px;
+            margin-top: 10px;
             color: #666;
-            font-size: 14px;
+            font-size: clamp(12px, 3vw, 14px);
+            padding: 0 10px;
         }
-        
+
         .language-selector {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 10px;
+            right: 10px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             z-index: 10;
         }
-        
+
         .lang-btn {
             background: white;
             border: 2px solid #ddd;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 18px;
             transition: all 0.2s;
             line-height: 1;
+            min-height: 38px;
+            min-width: 38px;
         }
-        
-        .lang-btn:hover {
-            transform: scale(1.1);
-            border-color: #667eea;
-        }
-        
+
         .lang-btn.active {
             border-color: #667eea;
             box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
         }
+
+        .touch-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .touch-btn:active {
+            transform: scale(0.9);
+        }
+
+        @media (max-width: 480px) {
+            #gameContainer {
+                padding: 10px;
+                border-radius: 15px;
+            }
+        }
     </style>
 </head>
+
 <body>
     <div id="gameContainer">
         <div class="language-selector">
@@ -161,27 +204,50 @@
         <div id="score">Správné odpovědi: 0</div>
         <div id="speed">Rychlost: 1.5×</div>
         <canvas id="gameCanvas" width="400" height="600"></canvas>
-        <div id="controls" class="controls">Ovládání: ← → nebo A D | Projet správnou odpovědí!</div>
+        <div class="touch-controls">
+            <div class="touch-btn" id="leftBtn">◀</div>
+            <div class="touch-btn" id="rightBtn">▶</div>
+        </div>
+        <div id="controls" class="controls">Dotykové ovládání nebo ← → / A D</div>
         <div id="gameOver">
             <h2 id="gameOverTitle">Konec hry!</h2>
-            <p id="scoreLabel">Tvoje skóre:<br><strong style="font-size: 32px; color: #667eea;"><span id="finalScore">0</span></strong></p>
+            <p id="scoreLabel">Tvoje skóre:<br><strong style="font-size: 32px; color: #667eea;"><span
+                        id="finalScore">0</span></strong></p>
             <button id="restartBtn" onclick="restartGame()">Hrát znovu</button>
         </div>
     </div>
 
     <script>
+        // Registrace Service Workeru
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker zaregistrován'))
+                .catch(err => console.log('Service Worker chyba:', err));
+        }
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
+
+        // Přizpůsobení canvas velikosti
+        function resizeCanvas() {
+            const maxWidth = Math.min(400, window.innerWidth - 40);
+            const aspectRatio = 600 / 400;
+            canvas.width = maxWidth;
+            canvas.height = maxWidth * aspectRatio;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
         // Jazykový systém
         let currentLanguage = 'cs';
-        
+
         const translations = {
             cs: {
                 title: '🏎️ Násobilka - Závod',
                 correctAnswers: 'Správné odpovědi',
                 speed: 'Rychlost',
-                controls: 'Ovládání: ← → nebo A D | Projet správnou odpovědí!',
+                controls: 'Dotykové ovládání nebo ← → / A D',
                 gameOver: 'Konec hry!',
                 yourScore: 'Tvoje skóre:',
                 playAgain: 'Hrát znovu'
@@ -190,17 +256,15 @@
                 title: '🏎️ Multiplication Race',
                 correctAnswers: 'Correct Answers',
                 speed: 'Speed',
-                controls: 'Controls: ← → or A D | Drive through the correct answer!',
+                controls: 'Touch controls or ← → / A D',
                 gameOver: 'Game Over!',
                 yourScore: 'Your score:',
                 playAgain: 'Play Again'
             }
         };
-        
+
         function setLanguage(lang) {
             currentLanguage = lang;
-            
-            // Aktualizuj UI texty
             document.getElementById('gameTitle').textContent = translations[lang].title;
             document.getElementById('score').textContent = translations[lang].correctAnswers + ': ' + score;
             document.getElementById('speed').textContent = translations[lang].speed + ': ' + speed.toFixed(1) + '×';
@@ -208,131 +272,161 @@
             document.getElementById('gameOverTitle').textContent = translations[lang].gameOver;
             document.getElementById('scoreLabel').innerHTML = translations[lang].yourScore + '<br><strong style="font-size: 32px; color: #667eea;"><span id="finalScore">' + score + '</span></strong>';
             document.getElementById('restartBtn').textContent = translations[lang].playAgain;
-            
-            // Aktualizuj aktivní tlačítko
+
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
-                if ((lang === 'cs' && btn.textContent.includes('🇨🇿')) || 
+                if ((lang === 'cs' && btn.textContent.includes('🇨🇿')) ||
                     (lang === 'en' && btn.textContent.includes('🇬🇧'))) {
                     btn.classList.add('active');
                 }
             });
-            
-            // Ulož preference
-            localStorage.setItem('gameLanguage', lang);
         }
-        
-        // Načti uloženou preferenci jazyka
-        const savedLanguage = localStorage.getItem('gameLanguage');
-        if (savedLanguage) {
-            currentLanguage = savedLanguage;
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if ((savedLanguage === 'cs' && btn.textContent.includes('🇨🇿')) || 
-                    (savedLanguage === 'en' && btn.textContent.includes('🇬🇧'))) {
-                    btn.classList.add('active');
-                }
-            });
-            // Aplikuj překlady při načtení
-            setTimeout(() => {
-                document.getElementById('gameTitle').textContent = translations[currentLanguage].title;
-                document.getElementById('controls').textContent = translations[currentLanguage].controls;
-            }, 0);
-        }
-        
+
         let gameRunning = true;
         let score = 0;
         let speed = 1.5;
         let roadOffset = 0;
-        
-        // Auto
+
         const car = {
-            x: canvas.width / 2 - 15,
-            y: canvas.height - 100,
+            x: 0,
+            y: 0,
             width: 30,
             height: 50,
             speed: 5
         };
-        
-        // Násobilka
+
+        function updateCarPosition() {
+            car.x = canvas.width / 2 - car.width / 2;
+            car.y = canvas.height - 100;
+        }
+        updateCarPosition();
+
         let currentQuestion = {};
         let answers = [];
-        
-        // Cesta
         let roadPoints = [];
-        const roadWidth = 280;
+        const roadWidth = 0.7;
         const segmentHeight = 30;
-        
-        // Konfety
         let confetti = [];
-        
-        // Generování příkladu násobilky
+
+        // Dotykové ovládání
+        const keys = {};
+
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys['ArrowLeft'] = true;
+        });
+
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys['ArrowLeft'] = false;
+        });
+
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys['ArrowRight'] = true;
+        });
+
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys['ArrowRight'] = false;
+        });
+
+        // Swipe gestures na canvas
+        let touchStartX = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touchX = e.touches[0].clientX;
+            const diff = touchX - touchStartX;
+
+            if (Math.abs(diff) > 5) {
+                keys['ArrowLeft'] = diff < 0;
+                keys['ArrowRight'] = diff > 0;
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            keys['ArrowLeft'] = false;
+            keys['ArrowRight'] = false;
+        });
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
         function generateQuestion() {
             const a = Math.floor(Math.random() * 10) + 1;
             const b = Math.floor(Math.random() * 10) + 1;
             const correctAnswer = a * b;
-            
-            // Špatná odpověď (náhodně ±1 až ±5, ale ne správná)
+
             let wrongAnswer;
             do {
                 const offset = Math.floor(Math.random() * 5) + 1;
                 wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
             } while (wrongAnswer === correctAnswer || wrongAnswer < 1);
-            
-            currentQuestion = {
-                a: a,
-                b: b,
-                correct: correctAnswer
-            };
-            
-            // Umístění odpovědí na cestu - vždy relativně k aktuálnímu roadOffset
-            const answerY = -roadOffset - 150; // Začnou nahoře mimo obrazovku
+
+            currentQuestion = { a, b, correct: correctAnswer };
+
+            const answerY = -roadOffset - 150;
             const roadCenter = getRoadCenterAt(answerY);
-            
-            // Odpovědi s větší mezerou - 75px od středu
-            const leftX = roadCenter - 75;
-            const rightX = roadCenter + 75;
-            
-            // Náhodně rozhodne, která strana bude správná
+            const spacing = canvas.width * 0.19;
+
+            const leftX = roadCenter - spacing;
+            const rightX = roadCenter + spacing;
             const correctOnLeft = Math.random() > 0.5;
-            
+
+            const answerWidth = canvas.width * 0.15;
+            const answerHeight = canvas.height * 0.08;
+
             answers = [
                 {
                     value: correctOnLeft ? correctAnswer : wrongAnswer,
                     correct: correctOnLeft,
-                    x: leftX - 30,
+                    x: leftX - answerWidth / 2,
                     y: answerY,
-                    width: 60,
-                    height: 50,
+                    width: answerWidth,
+                    height: answerHeight,
                     collected: false
                 },
                 {
                     value: correctOnLeft ? wrongAnswer : correctAnswer,
                     correct: !correctOnLeft,
-                    x: rightX - 30,
+                    x: rightX - answerWidth / 2,
                     y: answerY,
-                    width: 60,
-                    height: 50,
+                    width: answerWidth,
+                    height: answerHeight,
                     collected: false
                 }
             ];
-            
+
             document.getElementById('question').textContent = `${a} × ${b} = ?`;
         }
-        
-        // Inicializace cesty
+
         function initRoad() {
             roadPoints = [];
             let centerX = canvas.width / 2;
-            
+
             for (let i = -10; i < 30; i++) {
                 const y = i * segmentHeight;
-                centerX += (Math.random() - 0.5) * 20;
-                centerX = Math.max(roadWidth / 2 + 40, Math.min(canvas.width - roadWidth / 2 - 40, centerX));
+                centerX += (Math.random() - 0.5) * canvas.width * 0.05;
+                const roadHalfWidth = canvas.width * roadWidth / 2;
+                centerX = Math.max(roadHalfWidth + canvas.width * 0.1,
+                    Math.min(canvas.width - roadHalfWidth - canvas.width * 0.1, centerX));
                 roadPoints.push({ x: centerX, y: y });
             }
         }
-        
+
         function getRoadCenterAt(y) {
             for (let i = 0; i < roadPoints.length - 1; i++) {
                 if (y >= roadPoints[i].y && y < roadPoints[i + 1].y) {
@@ -341,105 +435,82 @@
                     return roadPoints[i].x + (roadPoints[i + 1].x - roadPoints[i].x) * t;
                 }
             }
-            
-            if (y < roadPoints[0].y) return roadPoints[0].x;
-            return roadPoints[roadPoints.length - 1].x;
+            return y < roadPoints[0].y ? roadPoints[0].x : roadPoints[roadPoints.length - 1].x;
         }
-        
-        // Vykreslení cesty
+
         function drawRoad() {
             ctx.fillStyle = '#228B22';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const visiblePoints = [];
-            for (let i = 0; i < roadPoints.length; i++) {
-                const y = roadPoints[i].y + roadOffset;
-                if (y >= -segmentHeight && y <= canvas.height + segmentHeight) {
-                    visiblePoints.push({ x: roadPoints[i].x, y: y });
-                }
-            }
-            
+
+            const visiblePoints = roadPoints
+                .map(p => ({ x: p.x, y: p.y + roadOffset }))
+                .filter(p => p.y >= -segmentHeight && p.y <= canvas.height + segmentHeight);
+
             if (visiblePoints.length < 2) return;
-            
+
+            const roadPixelWidth = canvas.width * roadWidth;
+
             ctx.fillStyle = '#333';
             ctx.beginPath();
-            
-            for (let i = 0; i < visiblePoints.length; i++) {
-                const x = visiblePoints[i].x - roadWidth / 2;
-                const y = visiblePoints[i].y;
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            
+
+            visiblePoints.forEach((p, i) => {
+                const x = p.x - roadPixelWidth / 2;
+                if (i === 0) ctx.moveTo(x, p.y);
+                else ctx.lineTo(x, p.y);
+            });
+
             for (let i = visiblePoints.length - 1; i >= 0; i--) {
-                const x = visiblePoints[i].x + roadWidth / 2;
-                const y = visiblePoints[i].y;
-                ctx.lineTo(x, y);
+                const p = visiblePoints[i];
+                ctx.lineTo(p.x + roadPixelWidth / 2, p.y);
             }
-            
+
             ctx.closePath();
             ctx.fill();
-            
+
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 3;
             ctx.setLineDash([20, 15]);
             ctx.beginPath();
-            
-            for (let i = 0; i < visiblePoints.length; i++) {
-                const x = visiblePoints[i].x;
-                const y = visiblePoints[i].y;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            }
-            
+
+            visiblePoints.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+
             ctx.stroke();
             ctx.setLineDash([]);
         }
-        
-        // Vykreslení odpovědí
+
         function drawAnswers() {
             answers.forEach(answer => {
                 if (answer.collected) return;
-                
+
                 const y = answer.y + roadOffset;
                 if (y < -100 || y > canvas.height + 100) return;
-                
-                // Stín
+
                 ctx.fillStyle = 'rgba(0,0,0,0.3)';
                 ctx.fillRect(answer.x + 3, y + 3, answer.width, answer.height);
-                
-                // Box - neutrální modrá barva
+
                 ctx.fillStyle = '#3498db';
                 ctx.fillRect(answer.x, y, answer.width, answer.height);
-                
-                // Okraj
+
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(answer.x, y, answer.width, answer.height);
-                
-                // Číslo
+
                 ctx.fillStyle = 'white';
-                ctx.font = 'bold 28px Arial';
+                ctx.font = `bold ${canvas.width * 0.07}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(answer.value, answer.x + answer.width / 2, y + answer.height / 2);
             });
         }
-        
-        // Vytvoření konfet
+
         function createConfetti(x, y) {
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
             for (let i = 0; i < 30; i++) {
                 confetti.push({
-                    x: x,
-                    y: y,
+                    x, y,
                     vx: (Math.random() - 0.5) * 10,
                     vy: (Math.random() - 0.5) * 10 - 5,
                     color: colors[Math.floor(Math.random() * colors.length)],
@@ -448,201 +519,166 @@
                 });
             }
         }
-        
-        // Vykreslení a aktualizace konfet
+
         function drawConfetti() {
             confetti = confetti.filter(c => {
                 c.x += c.vx;
                 c.y += c.vy;
-                c.vy += 0.3; // gravitace
+                c.vy += 0.3;
                 c.life -= 0.02;
-                
+
                 if (c.life <= 0) return false;
-                
+
                 ctx.globalAlpha = c.life;
                 ctx.fillStyle = c.color;
                 ctx.beginPath();
                 ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.globalAlpha = 1;
-                
+
                 return true;
             });
         }
-        
-        // Vykreslení auta
+
         function drawCar() {
             ctx.fillStyle = '#e74c3c';
             ctx.fillRect(car.x, car.y, car.width, car.height);
-            
+
             ctx.fillStyle = '#3498db';
             ctx.fillRect(car.x + 3, car.y + 5, car.width - 6, 15);
             ctx.fillRect(car.x + 3, car.y + 25, car.width - 6, 15);
-            
+
             ctx.fillStyle = '#000';
             ctx.fillRect(car.x - 3, car.y + 5, 4, 10);
             ctx.fillRect(car.x + car.width - 1, car.y + 5, 4, 10);
             ctx.fillRect(car.x - 3, car.y + 35, 4, 10);
             ctx.fillRect(car.x + car.width - 1, car.y + 35, 4, 10);
         }
-        
-        // Kontrola kolize s odpovědí
+
         function checkAnswerCollision() {
             answers.forEach(answer => {
                 if (answer.collected) return;
-                
+
                 const answerScreenY = answer.y + roadOffset;
-                
-                // Kontrola překrytí
+
                 if (car.x < answer.x + answer.width &&
                     car.x + car.width > answer.x &&
                     car.y < answerScreenY + answer.height &&
                     car.y + car.height > answerScreenY) {
-                    
+
                     answer.collected = true;
-                    
+
                     if (answer.correct) {
-                        // Správná odpověď - konfety!
                         createConfetti(answer.x + answer.width / 2, answerScreenY + answer.height / 2);
                         score++;
                         document.getElementById('score').textContent = translations[currentLanguage].correctAnswers + ': ' + score;
-                        
-                        // Po každé 5. správné odpovědi zrychlit
+
                         if (score % 5 === 0) {
                             speed += 0.3;
                             document.getElementById('speed').textContent = translations[currentLanguage].speed + ': ' + speed.toFixed(1) + '×';
                         }
-                        
-                        // Generuj nový příklad
-                        setTimeout(() => {
-                            generateQuestion();
-                        }, 500);
+
+                        setTimeout(() => generateQuestion(), 500);
                     } else {
-                        // Špatná odpověď - konec hry
                         gameOver();
                     }
                 }
             });
         }
-        
-        // Kontrola, zda hráč minul odpovědi
+
         function checkMissedAnswers() {
-            // Pokud nějaká odpověď už projela výrazně za auto a žádná nebyla sebrana
-            const anyPassed = answers.some(answer => {
-                const answerScreenY = answer.y + roadOffset;
-                return answerScreenY > car.y + car.height + 20;
-            });
-            
+            const anyPassed = answers.some(answer => answer.y + roadOffset > car.y + car.height + 20);
             const noneCollected = answers.every(answer => !answer.collected);
-            
-            if (anyPassed && noneCollected) {
-                gameOver();
-            }
+
+            if (anyPassed && noneCollected) gameOver();
         }
-        
-        // Kontrola kolize s okrajem cesty
+
         function checkRoadCollision() {
             const carCenterX = car.x + car.width / 2;
             const carFrontY = car.y;
             const carBackY = car.y + car.height;
-            
+
             const roadCenterFront = getRoadCenterAt(carFrontY - roadOffset);
             const roadCenterBack = getRoadCenterAt(carBackY - roadOffset);
-            
-            const leftEdgeFront = roadCenterFront - roadWidth / 2;
-            const rightEdgeFront = roadCenterFront + roadWidth / 2;
-            const leftEdgeBack = roadCenterBack - roadWidth / 2;
-            const rightEdgeBack = roadCenterBack + roadWidth / 2;
-            
-            if (car.x < leftEdgeFront || car.x + car.width > rightEdgeFront ||
-                car.x < leftEdgeBack || car.x + car.width > rightEdgeBack) {
-                return true;
-            }
-            
-            return false;
+            const roadPixelWidth = canvas.width * roadWidth;
+
+            const leftEdgeFront = roadCenterFront - roadPixelWidth / 2;
+            const rightEdgeFront = roadCenterFront + roadPixelWidth / 2;
+            const leftEdgeBack = roadCenterBack - roadPixelWidth / 2;
+            const rightEdgeBack = roadCenterBack + roadPixelWidth / 2;
+
+            return car.x < leftEdgeFront || car.x + car.width > rightEdgeFront ||
+                car.x < leftEdgeBack || car.x + car.width > rightEdgeBack;
         }
-        
-        // Aktualizace pozice odpovědí podle cesty
+
         function updateAnswerPositions() {
-            answers.forEach(answer => {
+            const spacing = canvas.width * 0.19;
+            answers.forEach((answer, i) => {
                 const roadCenter = getRoadCenterAt(answer.y - roadOffset);
-                const isLeft = answer === answers[0];
-                // Odpovědi s větší mezerou - 105px a 45px od středu
-                answer.x = roadCenter + (isLeft ? -105 : 45);
+                const isLeft = i === 0;
+                answer.x = roadCenter + (isLeft ? -spacing : spacing) - answer.width / 2;
             });
         }
-        
+
         function updateRoad() {
             while (roadPoints[0].y + roadOffset > -200) {
                 const firstPoint = roadPoints[0];
-                let newX = firstPoint.x + (Math.random() - 0.5) * 20;
-                newX = Math.max(roadWidth / 2 + 40, Math.min(canvas.width - roadWidth / 2 - 40, newX));
-                roadPoints.unshift({ 
-                    x: newX, 
-                    y: firstPoint.y - segmentHeight 
-                });
+                let newX = firstPoint.x + (Math.random() - 0.5) * canvas.width * 0.05;
+                const roadHalfWidth = canvas.width * roadWidth / 2;
+                newX = Math.max(roadHalfWidth + canvas.width * 0.1,
+                    Math.min(canvas.width - roadHalfWidth - canvas.width * 0.1, newX));
+                roadPoints.unshift({ x: newX, y: firstPoint.y - segmentHeight });
             }
-            
+
             while (roadPoints.length > 0 && roadPoints[roadPoints.length - 1].y + roadOffset > canvas.height + 200) {
                 roadPoints.pop();
             }
         }
-        
-        const keys = {};
-        
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-        });
-        
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
-        
+
         function gameLoop() {
             if (!gameRunning) return;
-            
+
             roadOffset += speed;
-            
             updateRoad();
             updateAnswerPositions();
-            
+
             if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
                 car.x -= car.speed;
             }
             if (keys['ArrowRight'] || keys['d'] || keys['D']) {
                 car.x += car.speed;
             }
-            
+
             car.x = Math.max(0, Math.min(canvas.width - car.width, car.x));
-            
+
             drawRoad();
             drawAnswers();
             drawCar();
             drawConfetti();
-            
+
             checkAnswerCollision();
             checkMissedAnswers();
-            
+
             if (checkRoadCollision()) {
                 gameOver();
                 return;
             }
-            
+
             requestAnimationFrame(gameLoop);
         }
-        
+
         function gameOver() {
             gameRunning = false;
             document.getElementById('finalScore').textContent = score;
             document.getElementById('gameOver').style.display = 'block';
         }
-        
+
         function restartGame() {
             gameRunning = true;
             score = 0;
             speed = 1.5;
             roadOffset = 0;
-            car.x = canvas.width / 2 - 15;
+            updateCarPosition();
             confetti = [];
             document.getElementById('score').textContent = translations[currentLanguage].correctAnswers + ': 0';
             document.getElementById('speed').textContent = translations[currentLanguage].speed + ': 1.5×';
@@ -651,10 +687,11 @@
             generateQuestion();
             gameLoop();
         }
-        
+
         initRoad();
         generateQuestion();
         gameLoop();
     </script>
 </body>
+
 </html>
