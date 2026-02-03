@@ -1,9 +1,10 @@
-import { CONFIG } from './constants.js';
+import { CONFIG, BIOMES } from './constants.js';
 
 export class GameState {
     constructor() {
-        this.reset();
         this.currentLanguage = 'cs';
+        this.mistakes = []; // Smart Learning storage
+        this.reset();
     }
 
     reset() {
@@ -14,6 +15,7 @@ export class GameState {
         this.score = 0;
         this.speed = CONFIG.INITIAL_SPEED;
         this.roadOffset = 0;
+        this.currentBiome = BIOMES[0];
         this.car = {
             x: 0,
             y: 0,

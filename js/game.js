@@ -1,4 +1,4 @@
-import { CONFIG, COLORS } from './constants.js';
+import { CONFIG, COLORS, BIOMES } from './constants.js';
 import { GameState } from './state.js';
 import { Renderer } from './renderer.js';
 import { InputHandler } from './input.js';
@@ -81,13 +81,24 @@ class Game {
     }
 
     generateQuestion() {
-        // Dynamic Difficulty based on score
-        let maxNum = 5;
-        if (this.state.score > 10) maxNum = 7;
-        if (this.state.score > 20) maxNum = 10;
+        let a, b;
+        
+        // Smart Learning: 30% chance to repeat a mistake if any exist
+        if (this.state.mistakes.length > 0 && Math.random() < 0.3) {
+            const index = Math.floor(Math.random() * this.state.mistakes.length);
+            const mistake = this.state.mistakes[index];
+            a = mistake.a;
+            b = mistake.b;
+        } else {
+            // Dynamic Difficulty based on score
+            let maxNum = 5;
+            if (this.state.score > 10) maxNum = 7;
+            if (this.state.score > 20) maxNum = 10;
 
-        const a = getRandomInt(1, maxNum);
-        const b = getRandomInt(1, maxNum);
+            a = getRandomInt(1, maxNum);
+            b = getRandomInt(1, maxNum);
+        }
+
         const correctAnswer = a * b;
 
         let wrongAnswer;
@@ -217,6 +228,7 @@ class Game {
                     this.createConfetti(answer.x + answer.width / 2, answerScreenY + answer.height / 2);
                     this.state.score++;
                     this.ui.updateScore();
+                    this.updateBiome();
 
                     if (this.state.score % CONFIG.SPEED_UP_INTERVAL === 0) {
                         this.state.speed += CONFIG.SPEED_INCREMENT;
@@ -231,7 +243,20 @@ class Game {
         });
     }
 
+    updateBiome() {
+        const nextBiome = [...BIOMES].reverse().find(b => this.state.score >= b.minScore);
+        if (nextBiome && nextBiome !== this.state.currentBiome) {
+            this.state.currentBiome = nextBiome;
+        }
+    }
+
     handleWrongAction() {
+        // Track mistake for Smart Learning
+        const { a, b } = this.state.currentQuestion;
+        if (!this.state.mistakes.some(m => m.a === a && m.b === b)) {
+            this.state.mistakes.push({ a, b });
+        }
+
         this.state.lives--;
         this.ui.updateLives();
         

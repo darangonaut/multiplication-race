@@ -33,6 +33,13 @@ export const COLORS = {
     CONFETTI: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493']
 };
 
+export const BIOMES = [
+    { name: 'Forest', minScore: 0, grass: '#228B22', asphalt: '#333', line: '#fff' },
+    { name: 'Desert', minScore: 15, grass: '#edc9af', asphalt: '#5d4037', line: '#fff' },
+    { name: 'Cyber', minScore: 30, grass: '#1a0633', asphalt: '#000', line: '#0ff' },
+    { name: 'Winter', minScore: 45, grass: '#f0f4f8', asphalt: '#455a64', line: '#fff' }
+];
+
 export const TRANSLATIONS = {
     cs: {
         title: '🏎️ Násobilka - Závod',

@@ -8,12 +8,12 @@ export class Renderer {
     }
 
     clear() {
-        this.ctx.fillStyle = COLORS.ROAD_GRASS;
+        this.ctx.fillStyle = this.state.currentBiome.grass;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     drawRoad() {
-        const { roadPoints, roadOffset } = this.state;
+        const { roadPoints, roadOffset, currentBiome } = this.state;
         const visiblePoints = roadPoints
             .map(p => ({ x: p.x, y: p.y + roadOffset }))
             .filter(p => p.y >= -CONFIG.SEGMENT_HEIGHT && p.y <= this.canvas.height + CONFIG.SEGMENT_HEIGHT);
@@ -23,7 +23,7 @@ export class Renderer {
         const roadPixelWidth = this.canvas.width * CONFIG.ROAD_WIDTH_PERCENT;
 
         // Draw asphalt
-        this.ctx.fillStyle = COLORS.ROAD_ASPHALT;
+        this.ctx.fillStyle = currentBiome.asphalt;
         this.ctx.beginPath();
         visiblePoints.forEach((p, i) => {
             const x = p.x - roadPixelWidth / 2;
@@ -38,7 +38,7 @@ export class Renderer {
         this.ctx.fill();
 
         // Draw center line
-        this.ctx.strokeStyle = COLORS.ROAD_LINE;
+        this.ctx.strokeStyle = currentBiome.line;
         this.ctx.lineWidth = 3;
         this.ctx.setLineDash([20, 15]);
         this.ctx.beginPath();
