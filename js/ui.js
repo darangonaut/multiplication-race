@@ -34,6 +34,13 @@ export class UI {
         this.elements.score.textContent = `${trans.correctAnswers}: ${this.state.score}`;
     }
 
+    updateLives() {
+        const livesContainer = document.getElementById('lives');
+        if (livesContainer) {
+            livesContainer.innerHTML = '❤️'.repeat(this.state.lives);
+        }
+    }
+
     updateSpeed() {
         const trans = TRANSLATIONS[this.state.currentLanguage];
         this.elements.speed.textContent = `${trans.speed}: ${this.state.speed.toFixed(1)}×`;

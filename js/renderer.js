@@ -110,11 +110,25 @@ export class Renderer {
         this.ctx.globalAlpha = 1;
     }
 
+    drawCountdown() {
+        if (!this.state.isCountingDown) return;
+
+        this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = `bold ${this.canvas.width * 0.3}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(this.state.countdownValue, this.canvas.width / 2, this.canvas.height / 2);
+    }
+
     render() {
         this.clear();
         this.drawRoad();
         this.drawAnswers();
         this.drawCar();
         this.drawConfetti();
+        this.drawCountdown();
     }
 }

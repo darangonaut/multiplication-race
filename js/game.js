@@ -38,13 +38,29 @@ class Game {
     init() {
         this.initRoad();
         this.generateQuestion();
-        this.state.gameRunning = true;
+        this.startCountdown();
+    }
+
+    startCountdown() {
+        this.state.gameRunning = false;
+        this.state.isCountingDown = true;
+        this.state.countdownValue = CONFIG.COUNTDOWN_DURATION;
+        
+        const timer = setInterval(() => {
+            this.state.countdownValue--;
+            if (this.state.countdownValue <= 0) {
+                clearInterval(timer);
+                this.state.isCountingDown = false;
+                this.state.gameRunning = true;
+            }
+        }, 1000);
     }
 
     restart() {
         this.state.reset();
         this.state.updateCarPosition(this.canvas.width, this.canvas.height);
         this.ui.updateScore();
+        this.ui.updateLives();
         this.ui.updateSpeed();
         this.ui.hideGameOver();
         this.init();
@@ -65,8 +81,13 @@ class Game {
     }
 
     generateQuestion() {
-        const a = getRandomInt(1, 10);
-        const b = getRandomInt(1, 10);
+        // Dynamic Difficulty based on score
+        let maxNum = 5;
+        if (this.state.score > 10) maxNum = 7;
+        if (this.state.score > 20) maxNum = 10;
+
+        const a = getRandomInt(1, maxNum);
+        const b = getRandomInt(1, maxNum);
         const correctAnswer = a * b;
 
         let wrongAnswer;
@@ -204,17 +225,33 @@ class Game {
 
                     setTimeout(() => this.generateQuestion(), 500);
                 } else {
-                    this.gameOver();
+                    this.handleWrongAction();
                 }
             }
         });
+    }
+
+    handleWrongAction() {
+        this.state.lives--;
+        this.ui.updateLives();
+        
+        if (this.state.lives <= 0) {
+            this.gameOver();
+        } else {
+            // Give temporary invulnerability or just clear current answers
+            this.state.answers.forEach(a => a.collected = true);
+            // Visual feedback: flash car or something is handled by renderer if we want
+            setTimeout(() => this.generateQuestion(), 500);
+        }
     }
 
     checkMissedAnswers() {
         const anyPassed = this.state.answers.some(answer => answer.y + this.state.roadOffset > this.state.car.y + this.state.car.height + 20);
         const noneCollected = this.state.answers.every(answer => !answer.collected);
 
-        if (anyPassed && noneCollected) this.gameOver();
+        if (anyPassed && noneCollected) {
+            this.handleWrongAction();
+        }
     }
 
     checkRoadCollision() {

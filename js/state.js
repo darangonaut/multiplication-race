@@ -8,6 +8,9 @@ export class GameState {
 
     reset() {
         this.gameRunning = false;
+        this.isCountingDown = false;
+        this.countdownValue = 0;
+        this.lives = CONFIG.MAX_LIVES;
         this.score = 0;
         this.speed = CONFIG.INITIAL_SPEED;
         this.roadOffset = 0;
