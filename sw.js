@@ -1,11 +1,23 @@
 const CACHE_NAME = 'nasobilka-v1';
-const BASE_PATH = '/multiplication-race';
+
+// Try to determine the base path from the script location
+const scriptPath = self.location.pathname;
+const BASE_PATH = scriptPath.substring(0, scriptPath.lastIndexOf('/'));
+
 const urlsToCache = [
-    `${BASE_PATH}/`,
-    `${BASE_PATH}/index.html`,
-    `${BASE_PATH}/manifest.json`,
-    `${BASE_PATH}/icon-192.png`,
-    `${BASE_PATH}/icon-512.png`
+    './',
+    './index.html',
+    './manifest.json',
+    './css/style.css',
+    './js/game.js',
+    './js/constants.js',
+    './js/state.js',
+    './js/renderer.js',
+    './js/input.js',
+    './js/ui.js',
+    './js/utils.js',
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 // Instalace service workeru
@@ -14,6 +26,7 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Cache otevřena');
+                // Use relative paths for caching
                 return cache.addAll(urlsToCache);
             })
     );
